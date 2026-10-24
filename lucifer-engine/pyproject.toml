@@ -1,0 +1,33 @@
+[project]
+name = "lucifer-engine"
+version = "0.1.0"
+description = "Runtime for an AI company: every agent is an employee that takes tasks, delegates down the org chart and reports back."
+readme = "README.md"
+license = "MIT"
+authors = [
+    { name = "siri2moon", email = "siri2moon@gmail.com" }
+]
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "crewai[anthropic]>=1.15.30",
+    "fastapi>=0.162.0",
+    "python-dotenv>=1.2.4",
+    "pyyaml>=6.0.3",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[project.scripts]
+lucifer-engine = "lucifer_engine.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pytest>=9.1.1",
+]
