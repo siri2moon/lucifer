@@ -34,6 +34,16 @@ export function AssignBar() {
     titleInput.current?.focus();
   }, [draft, agents, setDraft]);
 
+  // The mission dock sits just above this bar, whatever its height (the description box grows it).
+  const form = useRef<HTMLFormElement>(null);
+  useEffect(() => {
+    const el = form.current;
+    if (!el) return;
+    const observer = new ResizeObserver(() => document.documentElement.style.setProperty("--assign-h", `${el.offsetHeight}px`));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   const head = order.map((id) => agents[id]).find((a) => a?.managerId === null);
 
   const submit = async (e: FormEvent) => {
@@ -59,7 +69,7 @@ export function AssignBar() {
   };
 
   return (
-    <form className={`assign glass${expanded ? " is-expanded" : ""}`} onSubmit={submit}>
+    <form ref={form} className={`assign glass${expanded ? " is-expanded" : ""}`} onSubmit={submit}>
       {expanded && (
         <textarea
           className="assign__desc"

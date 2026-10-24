@@ -7,6 +7,7 @@ import { useOffice } from "./state/office";
 import { AssignBar } from "./ui/AssignBar";
 import { Drawer } from "./ui/Drawer";
 import { Guide } from "./ui/Guide";
+import { Missions } from "./ui/Missions";
 import { RightPanel } from "./ui/RightPanel";
 import { TeamPanel } from "./ui/TeamPanel";
 import { PanelHandles } from "./ui/Panels";
@@ -35,6 +36,10 @@ export function App() {
       }
       if ((e.key === "h" || e.key === "H") && !e.metaKey && !e.ctrlKey && !e.altKey && !isTyping(e.target)) {
         togglePanels();
+        return;
+      }
+      if ((e.key === "f" || e.key === "F") && !e.metaKey && !e.ctrlKey && !e.altKey && !isTyping(e.target)) {
+        useOffice.getState().toggleFollow();
         return;
       }
       if ((e.key === "[" || e.key === "]") && !e.metaKey && !e.ctrlKey && !e.altKey && !isTyping(e.target)) {
@@ -68,6 +73,8 @@ export function App() {
         <PanelHandles />
         <TeamPanel />
         <RightPanel />
+        {/* Before the drawer, so an open drawer covers the dock where they overlap. */}
+        <Missions />
         <Drawer />
         <AssignBar />
         <Guide />

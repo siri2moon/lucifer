@@ -1,6 +1,7 @@
 import type { Activity, AgentStatus, TaskPriority, TaskStatus, Translations } from "./protocol";
 import { type Lang } from "./langs";
 import { type PanelId, useOffice } from "./state/office";
+import type { Phase } from "./state/workflow";
 
 export { DEFAULT_LANG, LANGS, type Lang } from "./langs";
 
@@ -15,6 +16,11 @@ const en = {
   },
   connection: { open: "Connected", connecting: "Connecting…", closed: "Engine offline" },
   engine: { pause: "⏸ Break time", start: "▶ Clock in" },
+  camera: {
+    follow: "Follow the work",
+    followOnTitle: "Following the work: the camera glides to whoever is working and to every hand-off. Click to stop (F)",
+    followOffTitle: "Follow the work: let the camera glide to whoever is working and to every hand-off (F)",
+  },
   language: "Language",
   splash: {
     offlineTitle: "🌊 lucifer-engine not found",
@@ -51,7 +57,6 @@ const en = {
     reason: "Reason",
     result: "Result",
     deliverables: "Deliverables",
-    subtasks: (n: number) => `Subtasks (${n})`,
     log: "Log",
     cancel: "Cancel this task and its subtasks",
     loading: "Loading…",
@@ -121,6 +126,7 @@ const en = {
         body: [
           "The dot by each name, and the glow of their laptop, shows what an angel is doing:",
           "Speech bubbles show progress updates, thoughts, delegation and results. The Board tracks every task; Activity is the live feed.",
+          "Every request you give appears as a live mission above the assign bar: its phase, progress, who is working and what they just did. On the yacht, glowing links show work flowing from each manager to their reports, and the camera glides in to follow it (turn this off with F).",
           "Click any task to see its subtasks, log, result and the files the angels wrote. You can cancel a task at any time.",
         ],
         legend: true,
@@ -139,6 +145,7 @@ const en = {
     shortcutsTitle: "Shortcuts",
     shortcuts: [
       ["H", "Hide or show all panels"],
+      ["F", "Turn the camera's follow-the-work mode on or off"],
       ["[", "Collapse or show the team panel"],
       ["]", "Collapse or show the board"],
       ["Esc", "Close details and return to the overview"],
@@ -164,6 +171,26 @@ const en = {
       },
     ] as { title: string; description: string; assigneeId?: string }[],
   },
+  workflow: {
+    title: "Workflow",
+    missions: "Live missions",
+    phase: { queued: "Queued", working: "Working", team: "Team at work", merging: "Wrapping up", done: "Done", failed: "Failed", cancelled: "Cancelled" } as Record<Phase, string>,
+    steps: { queued: "Received", working: "Working", team: "Team", merging: "Wrap-up", done: "Done" },
+    status: {
+      queued: (name: string) => `Waiting for ${name} to pick it up`,
+      working: (name: string) => `${name} is on it`,
+      team: (done: number, total: number) => `${done}/${total} subtasks finished`,
+      merging: (name: string) => `${name} is merging the results`,
+      done: "Delivered",
+      failed: "Could not be completed",
+      cancelled: "Cancelled",
+    },
+    waitingOn: (n: number) => (n === 1 ? "Waiting on 1 report" : `Waiting on ${n} reports`),
+    queued: "In the queue",
+    more: (n: number) => `+${n} more`,
+    fewer: "Show fewer",
+    open: "Open details",
+  },
   ago: { s: "s", m: "m", h: "h", d: "d" },
 };
 
@@ -180,6 +207,11 @@ const vi: Messages = {
   },
   connection: { open: "Đã kết nối", connecting: "Đang kết nối…", closed: "Mất kết nối engine" },
   engine: { pause: "⏸ Cho nghỉ", start: "▶ Vào ca" },
+  camera: {
+    follow: "Theo dõi công việc",
+    followOnTitle: "Đang theo dõi công việc: camera tự lướt tới người đang làm và mỗi lần giao, nhận việc. Bấm để tắt (F)",
+    followOffTitle: "Theo dõi công việc: để camera tự lướt tới người đang làm và mỗi lần giao, nhận việc (F)",
+  },
   language: "Ngôn ngữ",
   splash: {
     offlineTitle: "🌊 Chưa thấy lucifer-engine",
@@ -216,7 +248,6 @@ const vi: Messages = {
     reason: "Lý do",
     result: "Kết quả",
     deliverables: "Sản phẩm",
-    subtasks: (n: number) => `Việc con (${n})`,
     log: "Nhật ký",
     cancel: "Huỷ việc này và các việc con",
     loading: "Đang tải…",
@@ -286,6 +317,7 @@ const vi: Messages = {
         body: [
           "Chấm màu cạnh tên và ánh sáng màn hình laptop cho biết thiên thần đang làm gì:",
           "Bong bóng thoại hiện tiến độ, suy nghĩ, việc giao và kết quả. Bảng việc theo dõi mọi task; Hoạt động là dòng sự kiện trực tiếp.",
+          "Mỗi việc bạn giao hiện thành một nhiệm vụ trực tiếp ngay trên thanh giao việc: đang ở giai đoạn nào, tiến độ bao nhiêu, ai đang làm và vừa làm gì. Trên du thuyền, các đường sáng cho thấy công việc chảy từ cấp trên xuống từng cấp dưới, và camera tự lướt lại gần để theo dõi (tắt bằng phím F).",
           "Bấm vào task để xem việc con, nhật ký, kết quả và các file thiên thần đã viết. Bạn có thể huỷ task bất cứ lúc nào.",
         ],
         legend: true,
@@ -304,6 +336,7 @@ const vi: Messages = {
     shortcutsTitle: "Phím tắt",
     shortcuts: [
       ["H", "Ẩn hoặc hiện tất cả các thanh"],
+      ["F", "Bật hoặc tắt chế độ camera theo dõi công việc"],
       ["[", "Thu gọn hoặc mở thanh nhân sự"],
       ["]", "Thu gọn hoặc mở bảng việc"],
       ["Esc", "Đóng chi tiết, quay về toàn cảnh"],
@@ -328,6 +361,26 @@ const vi: Messages = {
         assigneeId: "lilith",
       },
     ],
+  },
+  workflow: {
+    title: "Tiến trình",
+    missions: "Nhiệm vụ đang chạy",
+    phase: { queued: "Đang chờ", working: "Đang làm", team: "Cả đội đang làm", merging: "Đang tổng hợp", done: "Hoàn thành", failed: "Thất bại", cancelled: "Đã huỷ" },
+    steps: { queued: "Đã nhận", working: "Thực hiện", team: "Cả đội", merging: "Tổng hợp", done: "Xong" },
+    status: {
+      queued: (name: string) => `Chờ ${name} nhận việc`,
+      working: (name: string) => `${name} đang thực hiện`,
+      team: (done: number, total: number) => `${done}/${total} việc con đã xong`,
+      merging: (name: string) => `${name} đang tổng hợp kết quả`,
+      done: "Đã bàn giao",
+      failed: "Không hoàn thành được",
+      cancelled: "Đã huỷ",
+    },
+    waitingOn: (n: number) => `Chờ ${n} cấp dưới báo cáo`,
+    queued: "Đang trong hàng đợi",
+    more: (n: number) => `+${n} nhiệm vụ`,
+    fewer: "Thu gọn",
+    open: "Xem chi tiết",
   },
   ago: { s: "s", m: "ph", h: "g", d: "n" },
 };

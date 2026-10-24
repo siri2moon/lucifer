@@ -4,18 +4,19 @@ import { type ComponentRef, Suspense, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useLocalize } from "../i18n";
 import { useOffice } from "../state/office";
+import { workFocus } from "../state/workflow";
 import { AgentAvatar } from "./AgentAvatar";
 import { agentAnchors, LabelProjector } from "./labels";
 import { Beach, Pergola } from "./Beach";
 import { Beachgoers } from "./Beachgoers";
 import { BreakTime } from "./BreakTime";
 import { computeLayout, sandHeight, YACHT_POS } from "./layout";
+import { frame, HOME_CAMERA, HOME_TARGET } from "./framing";
 import { Ocean } from "./Ocean";
+import { WorkLinks } from "./WorkLinks";
 import { Yacht, ZoneMat } from "./Yacht";
 
 const SUN = new THREE.Vector3(70, 45, 55);
-const HOME_TARGET = new THREE.Vector3(3, 2, 11);
-const HOME_CAMERA = new THREE.Vector3(26, 20, 58);
 
 export function World() {
   return (
@@ -108,40 +109,98 @@ function Office() {
         <AgentAvatar key={a.id} agent={a} seat={layout.seats[a.id]!} />
       ))}
       <BreakTime agents={list.filter((a) => layout.seats[a.id])} />
+      <WorkLinks />
     </>
   );
 }
 
-/** Fly the camera to the selected agent; back to the overview when deselected. */
+/** After the user moves the camera, follow mode waits this long before taking over again. */
+const USER_HOLD_MS = 20_000;
+/** Minimum time on one shot, so the camera doesn't twitch with every event. */
+const SHOT_MS = 2500;
+/** With nothing moving, wait this long before pulling back to the overview. */
+const IDLE_MS = 5000;
+
+/**
+ * The camera director.
+ * - Selecting an agent flies to them; deselecting returns to the previous shot.
+ * - Follow mode frames whoever is working and both ends of every hand-off, so the flow of work
+ *   between angels is visible up close; it pulls back to the overview once the company is quiet.
+ * - Any drag or zoom by the user wins: follow mode waits until they leave the camera alone.
+ */
 function CameraRig() {
   const controls = useRef<ComponentRef<typeof OrbitControls>>(null);
   const selected = useOffice((s) => s.selectedAgentId);
-  const { camera } = useThree();
+  const follow = useOffice((s) => s.followWork);
+  const { camera, size } = useThree();
   const flying = useRef(false);
   const goal = useMemo(() => ({ target: HOME_TARGET.clone(), camera: HOME_CAMERA.clone() }), []);
   const lastSelected = useRef<string | null>(null);
   const tmp = useMemo(() => new THREE.Vector3(), []);
+  const shot = useRef({ key: "", at: 0, idleSince: 0, nextCheck: 0 });
+  const userHoldUntil = useRef(0);
+  const speed = useRef(3);
+
+  const flyTo = (target: THREE.Vector3, position: THREE.Vector3, rate: number) => {
+    goal.target.copy(target);
+    goal.camera.copy(position);
+    speed.current = rate;
+    flying.current = true;
+  };
 
   useFrame((_, dt) => {
     const c = controls.current;
     if (!c) return;
+    const now = performance.now();
     if (selected !== lastSelected.current) {
       lastSelected.current = selected;
-      flying.current = true;
       const anchor = selected ? agentAnchors.get(selected) : undefined;
       if (anchor) {
         anchor.getWorldPosition(tmp);
-        goal.target.copy(tmp).add(new THREE.Vector3(0, 1.2, 0));
-        goal.camera.copy(tmp).add(new THREE.Vector3(7, 6, 11));
+        flyTo(tmp.clone().add(new THREE.Vector3(0, 1.2, 0)), tmp.clone().add(new THREE.Vector3(7, 6, 11)), 3);
       } else {
-        goal.target.copy(HOME_TARGET);
-        goal.camera.copy(HOME_CAMERA);
+        flyTo(HOME_TARGET, HOME_CAMERA, 3);
+        // Let follow mode pick the shot right away.
+        shot.current = { key: "", at: 0, idleSince: 0, nextCheck: 0 };
+        userHoldUntil.current = 0;
       }
     }
+
+    if (follow && !selected && now >= userHoldUntil.current && now >= shot.current.nextCheck) {
+      shot.current.nextCheck = now + 400;
+      const { agents, tasks, activities, engine } = useOffice.getState();
+      const ids = engine?.running ? workFocus(agents, tasks, activities, Date.now()) : [];
+      const key = ids.join(",");
+      const s = shot.current;
+      if (ids.length > 0) {
+        s.idleSince = 0;
+        if (key !== s.key && (s.key === "" || now - s.at >= SHOT_MS)) {
+          const points = ids.flatMap((id) => {
+            const anchor = agentAnchors.get(id);
+            return anchor ? [anchor.getWorldPosition(new THREE.Vector3())] : [];
+          });
+          const pose = frame(points, (camera as THREE.PerspectiveCamera).fov, size.width / size.height);
+          if (pose) {
+            flyTo(pose.target, pose.camera, 1.4);
+            s.key = key;
+            s.at = now;
+          }
+        }
+      } else if (s.key !== "") {
+        if (!s.idleSince) s.idleSince = now;
+        else if (now - s.idleSince >= IDLE_MS) {
+          flyTo(HOME_TARGET, HOME_CAMERA, 1.2);
+          s.key = "";
+          s.at = now;
+        }
+      }
+    }
+
     if (flying.current) {
-      c.target.lerp(goal.target, 1 - Math.exp(-dt * 3));
-      camera.position.lerp(goal.camera, 1 - Math.exp(-dt * 3));
-      if (camera.position.distanceTo(goal.camera) < 0.05) flying.current = false;
+      const k = 1 - Math.exp(-dt * speed.current);
+      c.target.lerp(goal.target, k);
+      camera.position.lerp(goal.camera, k);
+      if (camera.position.distanceTo(goal.camera) < 0.05 && c.target.distanceTo(goal.target) < 0.05) flying.current = false;
     }
     c.update();
   });
@@ -157,6 +216,12 @@ function CameraRig() {
       maxPolarAngle={Math.PI / 2.15}
       onStart={() => {
         flying.current = false;
+        userHoldUntil.current = Infinity;
+      }}
+      onEnd={() => {
+        userHoldUntil.current = performance.now() + USER_HOLD_MS;
+        // The next automatic shot starts fresh from wherever the user left the camera.
+        shot.current.key = "";
       }}
     />
   );

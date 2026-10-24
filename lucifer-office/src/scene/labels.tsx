@@ -99,7 +99,7 @@ function AgentLabel({ agentId }: { agentId: string }) {
         selected && currentTask && <div className="bubble bubble--task">📌 {truncate(currentTask.title, 80)}</div>
       )}
       <button
-        className={`agent-tag${selected ? " is-selected" : ""}`}
+        className={`agent-tag agent-tag--${agent.status}${selected ? " is-selected" : ""}`}
         style={{ borderColor: agent.appearance.color }}
         onClick={() => selectAgent(selected ? null : agentId)}
         title={`${localize(agent, "title")} · ${t.agentStatus[agent.status]}`}

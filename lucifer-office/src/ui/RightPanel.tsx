@@ -5,7 +5,10 @@ import { useActivityText, useT } from "../i18n";
 import { ACTIVITY_ICONS, timeAgo } from "./format";
 import { ExampleTasks } from "./Guide";
 import { ActivityText } from "./Markdown";
+import { useChildrenIndex, useLatestByTask } from "./live";
 import { CollapseButton } from "./Panels";
+import { Elapsed, ProgressBar, StatusGlyph } from "./Workflow";
+import { isOpen, plainLine } from "../state/workflow";
 
 type ColumnId = "in_progress" | "waiting" | "todo" | "finished";
 const COLUMNS: { id: ColumnId; statuses: TaskStatus[] }[] = [
@@ -71,22 +74,47 @@ function Board() {
 export function TaskCard({ task }: { task: Task }) {
   const assignee = useOffice((s) => s.agents[task.assigneeId]);
   const selectTask = useOffice((s) => s.selectTask);
-  const subtaskCount = useOffice((s) => Object.values(s.tasks).filter((t) => t.parentId === task.id).length);
+  const children = useChildrenIndex().get(task.id) ?? [];
+  const latest = useLatestByTask();
+  const describe = useActivityText();
   const t = useT();
+  const finished = children.filter((c) => !isOpen(c)).length;
+  const active = task.status === "in_progress" || task.status === "waiting";
+  const live = task.status === "in_progress" ? latest.get(task.id) : undefined;
+
   return (
     <button className={`task task--${task.status}`} onClick={() => selectTask(task.id)}>
+      {/* Re-mounts on every update, so the card flashes when its task changes. */}
+      <span key={task.updatedAt} className="task__flash" aria-hidden />
       <div className="task__head">
         <span className={`prio prio--${task.priority}`}>{t.priority[task.priority]}</span>
-        <span className="task__status">{t.taskStatus[task.status]}</span>
+        <span className="task__status">
+          <StatusGlyph status={task.status} /> {t.taskStatus[task.status]}
+        </span>
+        {active && <Elapsed task={task} />}
       </div>
       <div className="task__title">{task.title}</div>
+      {live && (
+        <div className="task__live" key={live.id}>
+          {plainLine(describe(live), 100)}
+        </div>
+      )}
+      {task.status === "waiting" && children.length > finished && <div className="task__live">{t.workflow.waitingOn(children.length - finished)}</div>}
+      {children.length > 0 && isOpen(task) && (
+        <div className="task__progress">
+          <ProgressBar ratio={finished / children.length} phase={task.status === "waiting" ? "team" : "working"} />
+          <span>
+            {finished}/{children.length}
+          </span>
+        </div>
+      )}
       <div className="task__meta">
         {assignee && (
           <span>
             {assignee.appearance.emoji} {assignee.name}
           </span>
         )}
-        {subtaskCount > 0 && <span>🤝 {subtaskCount}</span>}
+        {children.length > 0 && !isOpen(task) && <span>🤝 {children.length}</span>}
         {task.artifacts.length > 0 && <span>📄 {task.artifacts.length}</span>}
         <span className="task__time">{timeAgo(task.updatedAt, t.ago)}</span>
       </div>

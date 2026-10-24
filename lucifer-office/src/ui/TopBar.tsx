@@ -13,6 +13,8 @@ export function TopBar() {
   const panelsVisible = useOffice((s) => s.panelsVisible);
   const togglePanels = useOffice((s) => s.togglePanels);
   const openGuide = useOffice((s) => s.openGuide);
+  const followWork = useOffice((s) => s.followWork);
+  const toggleFollow = useOffice((s) => s.toggleFollow);
   const t = useT();
   const [busy, setBusy] = useState(false);
 
@@ -59,6 +61,15 @@ export function TopBar() {
         >
           <PanelsIcon hidden={!panelsVisible} />
         </button>
+        <button
+          className={`btn btn--square${followWork ? " btn--on" : ""}`}
+          onClick={toggleFollow}
+          title={followWork ? t.camera.followOnTitle : t.camera.followOffTitle}
+          aria-label={t.camera.follow}
+          aria-pressed={followWork}
+        >
+          <FollowIcon />
+        </button>
         <button className="btn btn--square" onClick={openGuide} title={t.guide.buttonTitle} aria-label={t.guide.button}>
           <HelpIcon />
         </button>
@@ -97,6 +108,16 @@ function PanelsIcon({ hidden }: { hidden: boolean }) {
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       <rect x="3" y="4" width="18" height="16" rx="3" />
       {hidden ? <path d="M3 9h18" /> : <path d="M9 4v16M15 4v16" />}
+    </svg>
+  );
+}
+
+/** A camera with a focus bracket: the view follows the work. */
+function FollowIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16" />
+      <circle cx="12" cy="12" r="3.2" />
     </svg>
   );
 }

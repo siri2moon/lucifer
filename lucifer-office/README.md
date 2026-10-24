@@ -45,7 +45,11 @@ The dev server proxies `/api` and `/ws` to the engine. For an engine elsewhere, 
 
 **Interface**
 - Team roster, kanban board, activity feed and an assign bar with assignee and priority.
-- Each panel collapses to a handle at the screen edge (`[` for the team, `]` for the board); `H` hides them all.
+- **Live missions** above the assign bar: every request shows its phase, a streaming progress bar, the angels working on it and what they just did. Board cards show the current step, a running clock and subtask progress.
+- **Work links** on the yacht: a glowing arc from each manager to the reports holding their subtasks, with light flowing down while they work and a comet on every hand-off and every report back. Links of the selected mission glow brighter.
+- **Follow the work:** the camera glides in to frame whoever is working and both ends of every hand-off, then pulls back to the overview when the company goes quiet. Dragging or zooming takes over for 20 seconds; toggle it from the top bar or with `F`.
+- The task drawer shows the mission's **workflow**: a stepper (received, working, team, wrap-up, done) and the full delegation tree with live status on each node.
+- Each panel collapses to a handle at the screen edge (`[` for the team, `]` for the board); `H` hides them all; `F` turns camera follow on or off.
 - Agent and task drawers with subtasks, logs, results, a full-screen file viewer and cancellation. Expand a drawer for comfortable reading.
 - Click an angel or a name in the roster and the camera flies there. `Esc` returns to the overview.
 - A guided tour on the first visit, reopened with the help button or `?`.

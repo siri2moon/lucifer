@@ -84,6 +84,9 @@ interface OfficeStore extends OfficeData {
   /** Collapse panels one by one; a collapsed panel leaves a small handle at the screen edge. */
   collapsed: Record<PanelId, boolean>;
   togglePanel(id: PanelId): void;
+  /** The camera glides to whoever is working and to every hand-off; on by default. */
+  followWork: boolean;
+  toggleFollow(): void;
   lang: Lang;
   setLang(lang: Lang): void;
   /** The guide: opens on the first visit, reopened with the help button or the ? key. */
@@ -102,6 +105,7 @@ interface OfficeStore extends OfficeData {
 
 const PANELS_KEY = "lucifer-office:panels";
 const COLLAPSED_KEY = "lucifer-office:collapsed";
+const FOLLOW_KEY = "lucifer-office:follow";
 
 export type PanelId = "team" | "board" | "assign";
 const LANG_KEY = "lucifer-office:lang";
@@ -134,6 +138,14 @@ function loadLang(): Lang {
 function loadPanelsVisible(): boolean {
   try {
     return localStorage.getItem(PANELS_KEY) !== "hidden";
+  } catch {
+    return true;
+  }
+}
+
+function loadFollow(): boolean {
+  try {
+    return localStorage.getItem(FOLLOW_KEY) !== "off";
   } catch {
     return true;
   }
@@ -177,6 +189,16 @@ export const useOffice = create<OfficeStore>((set) => ({
         }
       }
       return { collapsed, panelsVisible: true };
+    }),
+  followWork: loadFollow(),
+  toggleFollow: () =>
+    set((s) => {
+      try {
+        localStorage.setItem(FOLLOW_KEY, s.followWork ? "off" : "on");
+      } catch {
+        // Not remembered across reloads, but the toggle still works.
+      }
+      return { followWork: !s.followWork };
     }),
   lang: loadLang(),
   guideOpen: !guideSeen(),

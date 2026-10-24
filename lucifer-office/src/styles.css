@@ -1407,3 +1407,601 @@ kbd {
   font-weight: 700;
   cursor: pointer;
 }
+
+/* ---------- live work: missions, workflow, status glyphs ---------- */
+:root {
+  --working: #38bdf8;
+  --waiting: #f59e0b;
+  --done: #10b981;
+}
+
+/* Status glyphs: a spinner while working, a breathing hourglass while waiting. */
+.glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  vertical-align: -2px;
+}
+.glyph--spin {
+  border-radius: 50%;
+  border: 2px solid rgba(56, 189, 248, 0.25);
+  border-top-color: var(--working);
+  animation: spin 0.9s linear infinite;
+}
+.glyph--wait {
+  font-size: 10px;
+  animation: breathe 1.6s ease-in-out infinite;
+}
+.glyph--todo {
+  border-radius: 50%;
+  border: 2px dashed #94a3b8;
+}
+.glyph--done {
+  border-radius: 50%;
+  background: var(--done);
+  color: #fff;
+  font-size: 9px;
+}
+.glyph--failed {
+  border-radius: 50%;
+  background: var(--danger);
+  color: #fff;
+  font-size: 8px;
+}
+.glyph--cancelled {
+  color: #94a3b8;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes breathe {
+  50% {
+    opacity: 0.45;
+    transform: scale(0.85);
+  }
+}
+
+.elapsed {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-soft);
+  flex-shrink: 0;
+}
+.elapsed--live {
+  color: #0369a1;
+  font-weight: 700;
+}
+
+/* Progress: striped and streaming while work moves, solid once it settles. */
+.progress {
+  position: relative;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(15, 42, 61, 0.08);
+  overflow: hidden;
+}
+.progress__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--working);
+  transition: width 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.progress--working .progress__fill,
+.progress--team .progress__fill,
+.progress--merging .progress__fill {
+  background-image: linear-gradient(110deg, transparent 25%, rgba(255, 255, 255, 0.55) 45%, transparent 65%), linear-gradient(90deg, #0ea5b7, #38bdf8);
+  background-size: 200% 100%, 100% 100%;
+  animation: stream 1.4s linear infinite;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
+}
+.progress--team .progress__fill {
+  background-image: linear-gradient(110deg, transparent 25%, rgba(255, 255, 255, 0.55) 45%, transparent 65%), linear-gradient(90deg, #f59e0b, #fbbf24);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.55);
+}
+.progress--merging .progress__fill {
+  background-image: linear-gradient(110deg, transparent 25%, rgba(255, 255, 255, 0.55) 45%, transparent 65%), linear-gradient(90deg, #8b5cf6, #a78bfa);
+  box-shadow: 0 0 10px rgba(139, 92, 246, 0.55);
+}
+/* Queued: an indeterminate sweep, since nothing is measurable yet. */
+.progress--queued .progress__fill {
+  width: 30% !important;
+  background: linear-gradient(90deg, transparent, #94a3b8, transparent);
+  animation: sweep 1.6s ease-in-out infinite;
+}
+.progress--done .progress__fill {
+  background: var(--done);
+}
+.progress--failed .progress__fill {
+  background: var(--danger);
+}
+.progress--cancelled .progress__fill {
+  background: #94a3b8;
+}
+@keyframes stream {
+  from {
+    background-position: 200% 0, 0 0;
+  }
+  to {
+    background-position: -200% 0, 0 0;
+  }
+}
+@keyframes sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(340%);
+  }
+}
+
+/* Mission dock: just above the assign bar, the same width. */
+.missions {
+  position: absolute;
+  left: 50%;
+  bottom: calc(18px + var(--assign-h, 64px) + 10px);
+  transform: translateX(-50%);
+  width: min(860px, calc(100vw - 680px));
+  min-width: 520px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: bottom 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s ease;
+}
+.missions--all {
+  max-height: calc(100vh - 360px);
+  overflow-y: auto;
+}
+.hud--no-assign .missions {
+  bottom: 64px;
+}
+.hud--clean .missions {
+  opacity: 0;
+  pointer-events: none;
+}
+.mission {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  padding: 9px 14px 8px;
+  border-radius: 14px;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  animation: mission-in 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+.mission:hover {
+  transform: translateY(-1px);
+}
+.mission.is-selected {
+  box-shadow: 0 0 0 2px rgba(14, 165, 183, 0.6), 0 10px 40px rgba(11, 79, 138, 0.18);
+}
+/* A glowing edge on the left tells the phase at a glance. */
+.mission::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: var(--working);
+}
+.mission--queued::before {
+  background: #94a3b8;
+}
+.mission--team::before {
+  background: var(--waiting);
+}
+.mission--merging::before {
+  background: #8b5cf6;
+}
+.mission--done::before {
+  background: var(--done);
+}
+.mission--failed::before {
+  background: var(--danger);
+}
+.mission--cancelled::before {
+  background: #94a3b8;
+}
+.mission--done {
+  animation: mission-in 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), landed 1.2s ease 1;
+}
+@keyframes mission-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+}
+@keyframes landed {
+  30% {
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.55), 0 10px 40px rgba(16, 185, 129, 0.3);
+  }
+}
+.mission__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.mission__title {
+  flex: 1;
+  min-width: 0;
+  font-weight: 700;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mission__crew {
+  display: flex;
+}
+.mission__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  margin-left: -5px;
+  border-radius: 50%;
+  font-size: 12px;
+  background: #fff;
+  border: 2px solid var(--agent);
+  animation: halo 1.8s ease-in-out infinite;
+}
+.mission__avatar:nth-child(2) {
+  animation-delay: 0.3s;
+}
+.mission__avatar:nth-child(3) {
+  animation-delay: 0.6s;
+}
+@keyframes halo {
+  50% {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--agent) 35%, transparent);
+  }
+}
+.mission__foot {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+.mission__foot b {
+  flex-shrink: 0;
+  color: var(--ink);
+}
+.mission__now {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  animation: text-in 0.4s ease;
+}
+.mission__now strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+.missions__more {
+  align-self: center;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+@keyframes text-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+/* Workflow in the task drawer: stepper, progress and the delegation tree. */
+.workflow {
+  margin: 12px 0 4px;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid var(--line);
+}
+.workflow h4 {
+  margin-top: 0;
+}
+.workflow__status {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+.stepper {
+  display: flex;
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+}
+.stepper__step {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--ink-soft);
+  text-align: center;
+}
+/* The rail between dots, filled for steps already passed. */
+.stepper__step + .stepper__step::before {
+  content: "";
+  position: absolute;
+  top: 5px;
+  right: 50%;
+  width: 100%;
+  height: 2px;
+  background: rgba(15, 42, 61, 0.12);
+}
+.stepper__step--past + .stepper__step::before,
+.stepper__step--past + .stepper__step--now::before {
+  background: var(--done);
+}
+.stepper__dot {
+  position: relative;
+  z-index: 1;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid rgba(15, 42, 61, 0.2);
+}
+.stepper__step--past .stepper__dot {
+  background: var(--done);
+  border-color: var(--done);
+}
+.stepper__step--now .stepper__dot {
+  border-color: var(--working);
+  background: var(--working);
+  animation: ping 1.4s ease-out infinite;
+}
+.stepper__step--now .stepper__label {
+  color: var(--ink);
+  font-weight: 700;
+}
+.stepper__step--failed .stepper__dot {
+  background: var(--danger);
+  border-color: var(--danger);
+}
+.stepper__step--cancelled .stepper__dot {
+  background: #94a3b8;
+  border-color: #94a3b8;
+}
+@keyframes ping {
+  0% {
+    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.6);
+  }
+  100% {
+    box-shadow: 0 0 0 8px rgba(56, 189, 248, 0);
+  }
+}
+
+.tree {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+}
+.tree .tree {
+  margin: 2px 0 0 13px;
+  padding-left: 12px;
+  border-left: 2px solid rgba(15, 42, 61, 0.1);
+}
+.tree__item {
+  position: relative;
+}
+/* The elbow from the parent's rail to this node. */
+.tree .tree > .tree__item::before {
+  content: "";
+  position: absolute;
+  top: 17px;
+  left: -12px;
+  width: 10px;
+  height: 2px;
+  background: rgba(15, 42, 61, 0.1);
+}
+/* Light runs down the rail into branches that are still working. */
+.tree .tree:has(> .tree__item--in_progress) {
+  border-left-color: transparent;
+  border-image: linear-gradient(180deg, rgba(56, 189, 248, 0.15), #38bdf8, rgba(56, 189, 248, 0.15)) 1;
+  border-image-slice: 1;
+  animation: rail 1.6s linear infinite;
+}
+@keyframes rail {
+  50% {
+    filter: brightness(1.35);
+  }
+}
+.tree__node {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  width: 100%;
+  padding: 7px 8px;
+  margin-bottom: 2px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.tree__node .glyph {
+  margin-top: 3px;
+}
+.tree__node:hover {
+  background: rgba(255, 255, 255, 0.85);
+}
+.tree__node.is-current {
+  background: #fff;
+  border-color: rgba(14, 165, 183, 0.5);
+}
+.tree__item--in_progress > .tree__node {
+  background: linear-gradient(90deg, rgba(56, 189, 248, 0.12), transparent 70%);
+}
+.tree__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 2px solid var(--agent, #cbd5e1);
+  background: #fff;
+  font-size: 12px;
+}
+.tree__item--in_progress > .tree__node .tree__avatar {
+  animation: halo 1.8s ease-in-out infinite;
+}
+.tree__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.tree__title {
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.tree__item--done > .tree__node .tree__title,
+.tree__item--cancelled > .tree__node .tree__title {
+  color: var(--ink-soft);
+}
+.tree__live {
+  font-size: 11.5px;
+  color: #0369a1;
+  line-height: 1.35;
+  animation: text-in 0.4s ease;
+}
+.tree__node .elapsed {
+  margin-top: 2px;
+}
+
+/* Board cards: live step, sub-progress, a sheen while working and a flash on every change. */
+.task {
+  position: relative;
+  overflow: hidden;
+}
+.task--in_progress {
+  background-image: linear-gradient(110deg, transparent 30%, rgba(56, 189, 248, 0.14) 50%, transparent 70%);
+  background-size: 250% 100%;
+  animation: sheen 2.4s linear infinite;
+}
+@keyframes sheen {
+  from {
+    background-position: 150% 0;
+  }
+  to {
+    background-position: -150% 0;
+  }
+}
+.task__head .elapsed {
+  margin-left: auto;
+}
+.task__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.task__status .glyph {
+  width: 11px;
+  height: 11px;
+  font-size: 8px;
+}
+.task__live {
+  margin: 2px 0 6px;
+  font-size: 11.5px;
+  line-height: 1.35;
+  color: #0369a1;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  animation: text-in 0.4s ease;
+}
+.task--waiting .task__live {
+  color: #b45309;
+}
+.task__progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+.task__progress .progress {
+  flex: 1;
+  height: 5px;
+}
+.task__flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  animation: flash 1s ease-out both;
+}
+@keyframes flash {
+  from {
+    background: rgba(56, 189, 248, 0.28);
+  }
+  to {
+    background: transparent;
+  }
+}
+.feed__item {
+  animation: text-in 0.4s ease;
+}
+/* Busy angels' dots pulse, so the scene shows at a glance who is working. */
+.agent-tag--working .agent-tag__dot,
+.agent-tag--thinking .agent-tag__dot {
+  animation: breathe 1.2s ease-in-out infinite;
+}
+
+@media (max-width: 1200px) {
+  .missions {
+    width: calc(100vw - 560px);
+    min-width: 380px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glyph--spin,
+  .glyph--wait,
+  .progress__fill,
+  .mission,
+  .mission__avatar,
+  .mission__now,
+  .stepper__dot,
+  .tree .tree,
+  .tree__avatar,
+  .tree__live,
+  .task--in_progress,
+  .task__live,
+  .task__flash,
+  .feed__item,
+  .agent-tag__dot {
+    animation: none !important;
+  }
+}

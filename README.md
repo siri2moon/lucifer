@@ -60,9 +60,24 @@ The idea carries into the software. People make mistakes, companies do, and AI a
 - **Angels as staff:** feathered wings in each agent's color, a halo that glows while they work, an ivory tunic and a silk stole. The head of the company is a seraph with two pairs of golden wings.
 - **Status at a glance:** laptop screens, motion and speech bubbles show who is working, thinking, waiting on reports or idle.
 - **Mission control:** team roster, kanban board, activity feed, and drawers with subtasks, logs, results and a full-screen viewer for deliverables. Click an angel and the camera flies to them.
+- **Work you can follow:** live missions, glowing work links between angels and a camera that follows every hand-off. See [Watch the work flow](#watch-the-work-flow).
 - **Break time:** pause the company and the angels fly ashore for coffee at the Heaven's Brew bar, a swim, some sun or a chat. Clock in and they fly back.
 - **Built for watching:** collapse any panel to an edge handle, or press `H` to hide everything.
 - **Guided and multilingual:** a first-run tour, example tasks on an empty board, and English and Vietnamese UIs.
+
+### Watch the work flow
+
+<p align="center">
+  <a href="docs/live-work.mp4"><img src="docs/live-work.gif" alt="A request handed to the CEO is split down the org chart; the camera follows each hand-off while live missions and board cards show progress" width="960"></a>
+  <br><sub>4× speed preview with a real LLM (DeepSeek) · <a href="docs/live-work.mp4">watch the full video</a></sub>
+</p>
+
+Give the company a goal and you can follow it from the moment it lands to the moment it is delivered:
+
+- **Live missions.** Every request appears above the assign bar as soon as you send it, with its phase (queued, working, team at work, wrapping up, done), a streaming progress bar, a running clock, the angels working on it and what they just did.
+- **Work links.** On the yacht, a glowing arc joins each manager to the reports holding their subtasks. Light flows down while they work, a gold comet flies down on every delegation and a green one flies back up on every report.
+- **A camera that follows the work.** It glides in to frame whoever is working and both ends of every hand-off, then pulls back when the company goes quiet. Drag or zoom and it gives you control for 20 seconds; press `F` to turn it off.
+- **Workflow in every task.** The task drawer shows a stepper and the whole delegation tree, with a live status line on each node that is working. Board cards show the current step, a running clock and subtask progress.
 
 ## Quick start
 

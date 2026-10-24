@@ -8,6 +8,7 @@ import { TERMINAL_TASK_STATUSES } from "../protocol";
 import { ACTIVITY_ICONS, compactNumber, timeAgo } from "./format";
 import { ActivityText, Markdown } from "./Markdown";
 import { TaskCard, useTicker } from "./RightPanel";
+import { Workflow } from "./Workflow";
 
 /** The detail drawer: the selected task if any, otherwise the selected agent. */
 export function Drawer() {
@@ -144,7 +145,6 @@ function TaskDetail({ taskId, ...view }: { taskId: string } & DrawerView) {
   const describe = useActivityText();
   useTicker(5000);
 
-  const subtasks = useMemo(() => Object.values(tasks).filter((t) => t.parentId === taskId), [tasks, taskId]);
   const log = useMemo(() => activities.filter((a) => a.taskId === taskId).slice(-30).reverse(), [activities, taskId]);
   if (!task) return null;
   const assignee = agents[task.assigneeId];
@@ -176,6 +176,7 @@ function TaskDetail({ taskId, ...view }: { taskId: string } & DrawerView) {
           {assignee.appearance.emoji} {assignee.name} · {localize(assignee, "title")}
         </button>
       )}
+      <Workflow taskId={task.id} />
       {task.description && <Markdown text={task.description} className="persona" />}
       {task.result && (
         <div className={`result result--${task.status}`}>
@@ -193,14 +194,6 @@ function TaskDetail({ taskId, ...view }: { taskId: string } & DrawerView) {
               </button>
             ))}
           </div>
-        </>
-      )}
-      {subtasks.length > 0 && (
-        <>
-          <h4>{t.drawer.subtasks(subtasks.length)}</h4>
-          {subtasks.map((sub) => (
-            <TaskCard key={sub.id} task={sub} />
-          ))}
         </>
       )}
       {log.length > 0 && (
