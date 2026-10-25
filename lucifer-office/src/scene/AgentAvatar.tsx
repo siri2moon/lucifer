@@ -6,6 +6,11 @@ import { useOffice } from "../state/office";
 import { agentAnchors, deskAnchors, deskBodies, STATUS_COLORS } from "./labels";
 import type { Seat } from "./layout";
 import { type Outfit, Person } from "./Person";
+import { brassMat } from "./Yacht";
+
+const walnutMat = new THREE.MeshPhysicalMaterial({ color: "#4a2c1d", roughness: 0.35, clearcoat: 0.9, clearcoatRoughness: 0.15 });
+const porcelainMat = new THREE.MeshPhysicalMaterial({ color: "#fffaf0", roughness: 0.25, clearcoat: 0.8 });
+const espressoMat = new THREE.MeshStandardMaterial({ color: "#5a3218", roughness: 0.3 });
 
 const SKIN_TONES = ["#f6d7bf", "#f1c7a5", "#e0ac83", "#c68b62", "#a8714a", "#7d5236"];
 /** Platinum, honey blonde, golden, silver, chestnut, jet black. */
@@ -116,32 +121,45 @@ export function AgentAvatar({ agent, seat }: { agent: Agent; seat: Seat }) {
         <Person outfit={outfit} pose={agent.status === "offline" ? "stand" : "sit"} energy={energy} phase={hash(agent.id) % 100} />
       </group>
 
-      {/* Desk */}
+      {/* Desk: walnut top on brass legs */}
       <group position={[0, 0, 0.75]}>
-        <mesh position={[0, 0.74, 0]} castShadow receiveShadow>
-          <boxGeometry args={[1.5, 0.06, 0.8]} />
-          <meshStandardMaterial color="#e9dcc4" roughness={0.6} />
+        <mesh position={[0, 0.74, 0]} material={walnutMat} castShadow receiveShadow>
+          <boxGeometry args={[1.5, 0.05, 0.78]} />
         </mesh>
-        {[-0.65, 0.65].map((x) => (
-          <mesh key={x} position={[x, 0.37, 0]} castShadow>
-            <boxGeometry args={[0.06, 0.74, 0.7]} />
-            <meshStandardMaterial color="#c8b48f" />
-          </mesh>
+        <mesh position={[0, 0.712, 0]} material={brassMat}>
+          <boxGeometry args={[1.52, 0.012, 0.8]} />
+        </mesh>
+        {[-0.66, 0.66].map((x) => (
+          <group key={x} position={[x, 0, 0]}>
+            <mesh position={[0, 0.36, 0]} material={brassMat} castShadow>
+              <boxGeometry args={[0.035, 0.72, 0.035]} />
+            </mesh>
+            <mesh position={[0, 0.02, 0]} material={brassMat}>
+              <boxGeometry args={[0.04, 0.03, 0.62]} />
+            </mesh>
+          </group>
         ))}
         {/* Laptop: the screen color follows the status */}
-        <mesh position={[0, 0.785, -0.08]} castShadow>
-          <boxGeometry args={[0.5, 0.025, 0.34]} />
-          <meshStandardMaterial color="#c0c4cc" metalness={0.7} roughness={0.3} />
+        <mesh position={[0, 0.775, -0.08]} castShadow>
+          <boxGeometry args={[0.5, 0.02, 0.34]} />
+          <meshStandardMaterial color="#c0c4cc" metalness={0.8} roughness={0.25} />
         </mesh>
-        <mesh position={[0, 0.94, 0.09]} rotation={[0.25, 0, 0]} castShadow>
+        <mesh position={[0, 0.93, 0.09]} rotation={[0.25, 0, 0]} castShadow>
           <boxGeometry args={[0.5, 0.32, 0.02]} />
           <meshStandardMaterial ref={screen} color="#0f172a" emissive="#000000" />
         </mesh>
-        {/* Coconut drink */}
-        <mesh position={[0.5, 0.86, 0.1]} castShadow>
-          <sphereGeometry args={[0.1, 8, 6]} />
-          <meshStandardMaterial color="#7a5a2e" flatShading />
-        </mesh>
+        {/* Espresso in a porcelain cup on a saucer */}
+        <group position={[0.52, 0.765, 0.12]}>
+          <mesh material={porcelainMat}>
+            <cylinderGeometry args={[0.075, 0.06, 0.012, 20]} />
+          </mesh>
+          <mesh material={porcelainMat} position={[0, 0.04, 0]} castShadow>
+            <cylinderGeometry args={[0.042, 0.032, 0.07, 16]} />
+          </mesh>
+          <mesh material={espressoMat} position={[0, 0.074, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+            <circleGeometry args={[0.038, 16]} />
+          </mesh>
+        </group>
       </group>
 
       <StatusFx status={agent.status} />

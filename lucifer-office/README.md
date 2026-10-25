@@ -20,8 +20,10 @@ The dev server proxies `/api` and `/ws` to the engine. For an engine elsewhere, 
 ## What's inside
 
 **The yacht**
-- A white hull with a navy bottom and a gold stripe, **LUCIFER ✦✦✦✦✦✦** on the side, bobbing on the waves.
-- Three teak decks, glass rails, a sky deck canopy with a spinning radar, and a jacuzzi at the bow.
+- A lofted hull in deep navy lacquer with a raked stem, flared bow and a sheer line sweeping up to the bow, trimmed with gold sheer and boot stripes, a varnished cap rail and gold-framed hull windows. **LUCIFER ✦✦✦✦✦✦** in gilded capitals on each side and on the transom.
+- Teak decks with caulked planks, frameless glass rails, raked white superstructure with wraparound dark glass, and a sky deck hardtop with a swept-back mast, spinning radar and satcom domes.
+- A swim platform and the company flag at the stern, a jacuzzi and sunpads at the bow, underwater lights glowing through the shallows.
+- **Crew:** a stewardess for each work zone on board, in a white blouse and navy pencil skirt, carries coffee on a tray from her cart to the angels' desks, serving whoever is working first.
 
 **Work zones**
 - One zone per department. The CEO's department gets the **sky deck**; the others fill the upper, aft and bow decks by size.
@@ -67,7 +69,9 @@ src/
     World.tsx          canvas, lighting, sky, camera, seagulls, sailboat
     Ocean.tsx          sea shader
     Beach.tsx          sand, palms, umbrellas, loungers, pergola
-    Yacht.tsx          the yacht and work zone mats
+    hull.ts            hull and deck geometry: lofted hull, deck plans, rails
+    Yacht.tsx          the yacht, its fittings and work zone rugs
+    Stewards.tsx       the yacht's crew serving coffee
     layout.ts          departments to zones, desks within zones
     Person.tsx         character body, clothes and poses
     Angel.tsx          wings, halo, tunic and stole

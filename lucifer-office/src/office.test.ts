@@ -4,6 +4,7 @@ import { computeLayout, ZONES } from "./scene/layout";
 import { activityText, localize, MESSAGES } from "./i18n";
 import { applyEvent, emptyOffice } from "./state/office";
 import { preferredLang } from "./langs";
+import { DECK_Y, deckHalfWidth, MAIN_HOUSE, type Plan, planContains, SKY_DECK, UPPER_DECK } from "./scene/hull";
 
 function agent(id: string, departmentId: string, managerId: string | null): Agent {
   return {
@@ -140,5 +141,28 @@ describe("preferredLang", () => {
     expect(preferredLang(["fr-FR", "EN-gb"])).toBe("en");
     expect(preferredLang(["ja-JP", "fr"])).toBe("en");
     expect(preferredLang([])).toBe("en");
+  });
+});
+
+describe("yacht", () => {
+  const corners = (z: (typeof ZONES)[number]) =>
+    [-1, 1].flatMap((sx) => [-1, 1].map((sz) => [z.center[0] + (sx * z.size[0]) / 2, z.center[2] + (sz * z.size[1]) / 2] as const));
+
+  it("keeps every work zone on board within its deck", () => {
+    const deckOf: Record<string, Plan | "main"> = { sky: SKY_DECK, upper: UPPER_DECK, aft: "main", bow: "main" };
+    for (const zone of ZONES.filter((z) => z.onYacht)) {
+      const deck = deckOf[zone.id];
+      expect(deck, zone.id).toBeDefined();
+      for (const [x, z] of corners(zone)) {
+        if (deck === "main") expect(Math.abs(z), `${zone.id} at x=${x}`).toBeLessThan(deckHalfWidth(x));
+        else expect(planContains(deck!, x, z), `${zone.id} at (${x}, ${z})`).toBe(true);
+      }
+    }
+  });
+
+  it("keeps main deck zones clear of the saloon", () => {
+    for (const zone of ZONES.filter((z) => z.onYacht && Math.abs(z.center[1] - DECK_Y) < 0.2)) {
+      for (const [x, z] of corners(zone)) expect(planContains(MAIN_HOUSE, x, z), `${zone.id} at (${x}, ${z})`).toBe(false);
+    }
   });
 });

@@ -13,6 +13,7 @@ import { BreakTime } from "./BreakTime";
 import { computeLayout, sandHeight, YACHT_POS } from "./layout";
 import { frame, HOME_CAMERA, HOME_TARGET } from "./framing";
 import { Ocean } from "./Ocean";
+import { Stewards } from "./Stewards";
 import { WorkLinks } from "./WorkLinks";
 import { Yacht, ZoneMat } from "./Yacht";
 
@@ -86,6 +87,8 @@ function Office() {
     .filter((z): z is { dept: (typeof departments)[number]; zone: NonNullable<typeof z.zone> } => Boolean(z.zone));
 
   const onYacht = list.filter((a) => layout.seats[a.id]?.zone.onYacht);
+  // Stable across status updates, so the crew keep walking instead of snapping back to their carts.
+  const yachtSeats = useMemo(() => Object.values(layout.seats).filter((s) => s.zone.onYacht), [layout]);
   const onBeach = list.filter((a) => layout.seats[a.id] && !layout.seats[a.id]!.zone.onYacht);
 
   return (
@@ -99,6 +102,7 @@ function Office() {
         {onYacht.map((a) => (
           <AgentAvatar key={a.id} agent={a} seat={layout.seats[a.id]!} />
         ))}
+        <Stewards seats={yachtSeats} />
       </Yacht>
       {zonesInUse
         .filter(({ zone }) => !zone.onYacht)

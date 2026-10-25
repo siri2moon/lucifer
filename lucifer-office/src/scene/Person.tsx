@@ -11,7 +11,11 @@ export interface Outfit {
   hairStyle: "short" | "long" | "bun" | "ponytail";
   /** Top: "shirt" is a short-sleeved tee, "tunic" the angel's robe with a skirt, "bikini" a bandeau, null bare-chested. */
   top: { style: "shirt" | "tunic" | "bikini"; color: string } | null;
-  bottom: { style: "pants" | "shorts" | "bikini"; color: string };
+  bottom: { style: "pants" | "shorts" | "bikini" | "skirt"; color: string };
+  /** A curvier torso under clothes (bikini tops always use it). */
+  curvy?: boolean;
+  /** Leg length relative to the default, for taller characters. */
+  legs?: number;
   hat?: string;
   sunglasses?: boolean;
   /** Gold sandals instead of shoes. */
@@ -27,8 +31,8 @@ interface Props {
   energy?: number;
   /** Phase offset so people don't move in sync. */
   phase?: number;
-  /** Item held in the right hand. */
-  prop?: "cup";
+  /** Item held in the right hand: a coffee cup, or a serving tray carried at chest height. */
+  prop?: "cup" | "tray";
 }
 
 const THIGH = 0.44;
@@ -171,6 +175,23 @@ const geo = {
   sleeve: tube(0.14, 0.074, 0.066),
   shortsLeg: tube(0.2, 0.104, 0.09),
   hand: new THREE.SphereGeometry(0.052, 16, 12),
+  // A pencil skirt from the waist to the knee, flaring just enough to clear the legs.
+  skirt: (() => {
+    const g = new THREE.LatheGeometry(
+      [
+        [0.188, -0.42],
+        [0.2, -0.3],
+        [0.198, -0.15],
+        [0.178, -0.02],
+        [0.165, 0.06],
+        [0.15, 0.1],
+      ].map(([x, y]) => new THREE.Vector2(x, y)),
+      32,
+    );
+    g.computeVertexNormals();
+    return g;
+  })(),
+  tray: new THREE.CylinderGeometry(0.2, 0.19, 0.02, 32),
   shoe: new THREE.CapsuleGeometry(0.055, 0.13, 8, 16),
   cup: new THREE.CylinderGeometry(0.05, 0.04, 0.11, 20),
   coffee: new THREE.CircleGeometry(0.045, 20).rotateX(-Math.PI / 2),
@@ -205,6 +226,7 @@ const eyeMat = new THREE.MeshPhysicalMaterial({ color: "#1d1a24", roughness: 0.1
 const sparkleMat = new THREE.MeshBasicMaterial({ color: "#ffffff" });
 const smileMat = new THREE.MeshStandardMaterial({ color: "#7a3b3b", roughness: 0.6 });
 const blushMat = new THREE.MeshBasicMaterial({ color: "#ff7b8a", transparent: true, opacity: 0.32, depthWrite: false });
+const trayMat = new THREE.MeshStandardMaterial({ color: "#f2f4f7", metalness: 0.55, roughness: 0.3 });
 const cupMat = new THREE.MeshPhysicalMaterial({ color: "#fffaf0", roughness: 0.25, clearcoat: 0.8 });
 const coffeeMat = new THREE.MeshStandardMaterial({ color: "#6b3f22", roughness: 0.4 });
 const lensMat = new THREE.MeshPhysicalMaterial({ color: "#14121c", roughness: 0.05, metalness: 0.3, clearcoat: 1, clearcoatRoughness: 0.02 });
@@ -235,7 +257,8 @@ export function Person({ outfit, pose, energy = 1, phase = 0, prop }: Props) {
       skin,
       shirt,
       hair: mat(outfit.hair, "hair"),
-      curvy: outfit.top?.style === "bikini",
+      curvy: outfit.top?.style === "bikini" || Boolean(outfit.curvy),
+      skirt: outfit.bottom.style === "skirt" ? bottom : null,
       bikiniTop: outfit.top?.style === "bikini" ? mat(outfit.top.color, "gloss") : null,
       bikiniBottom: swim ? bottom : null,
       pelvis: swim ? skin : bottom,
@@ -243,13 +266,18 @@ export function Person({ outfit, pose, energy = 1, phase = 0, prop }: Props) {
       shortsLeg: outfit.bottom.style === "shorts" ? bottom : null,
       shin: outfit.bottom.style === "pants" ? bottom : skin,
       // Barefoot in swimwear, white sneakers with shorts, brown shoes with trousers.
-      shoe: outfit.goldSandals ? goldMat : swim ? skin : mat(outfit.bottom.style === "shorts" ? "#f4f1ea" : "#4a3a30", "matte"),
+      shoe: outfit.goldSandals
+        ? goldMat
+        : swim
+          ? skin
+          : mat(outfit.bottom.style === "shorts" ? "#f4f1ea" : outfit.bottom.style === "skirt" ? "#141a2c" : "#4a3a30", outfit.bottom.style === "skirt" ? "gloss" : "matte"),
       hat: outfit.hat ? mat(outfit.hat, "fabric") : null,
       hatBand: outfit.hat ? mat(outfit.top?.color ?? "#e85a9b", "gloss") : null,
       brow: mat(outfit.hair, "matte"),
     };
   }, [outfit]);
   const tunic = outfit.top?.style === "tunic";
+  const legs = outfit.legs ?? 1;
 
   useFrame(({ clock }) => {
     const t = clock.elapsedTime + phase;
@@ -264,7 +292,7 @@ export function Person({ outfit, pose, energy = 1, phase = 0, prop }: Props) {
     // Default: standing upright, breathing gently.
     r.rotation.set(0, 0, 0);
     r.position.y = 0;
-    h.position.y = HIP_Y;
+    h.position.y = HIP_Y * legs;
     tor.rotation.set(0, 0, 0);
     tor.scale.set(1, 1 + Math.sin(t * 1.6) * 0.012, 1);
     hd.rotation.set(0, Math.sin(t * 0.4) * 0.15, Math.sin(t * 0.33) * 0.04);
@@ -365,6 +393,13 @@ export function Person({ outfit, pose, energy = 1, phase = 0, prop }: Props) {
         sL.rotation.z = 0.14 + Math.sin(t * 1.1) * 0.03;
         break;
     }
+
+    // Carrying a tray: the right forearm level and forward, the tray flat on the palm, held steady.
+    if (prop === "tray") {
+      sR.rotation.set(-0.3, 0, -0.32);
+      eR.rotation.set(-1.27, 0.25, 0);
+      tor.rotation.y = 0;
+    }
   });
 
   return (
@@ -372,6 +407,7 @@ export function Person({ outfit, pose, energy = 1, phase = 0, prop }: Props) {
       <group ref={hips} position={[0, HIP_Y, 0]}>
         <mesh geometry={geo.pelvis} material={look.pelvis} scale={[1, 1, BODY_DEPTH]} castShadow />
         {look.bikiniBottom && <mesh geometry={geo.bikiniBottom} material={look.bikiniBottom} scale={[1, 1, BODY_DEPTH]} castShadow />}
+        {look.skirt && <mesh geometry={geo.skirt} material={look.skirt} scale={[1, 1, 0.86]} castShadow />}
         {tunic && look.shirt && (
           <>
             <TunicSkirt cloth={look.shirt} sitting={pose === "sit"} depth={BODY_DEPTH} />
@@ -399,11 +435,11 @@ export function Person({ outfit, pose, energy = 1, phase = 0, prop }: Props) {
           </group>
 
           <Arm side={-1} shoulder={shoulderL} elbow={elbowL} skin={look.skin} sleeve={look.shirt} />
-          <Arm side={1} shoulder={shoulderR} elbow={elbowR} skin={look.skin} sleeve={look.shirt} cup={prop === "cup"} />
+          <Arm side={1} shoulder={shoulderR} elbow={elbowR} skin={look.skin} sleeve={look.shirt} prop={prop} />
         </group>
 
-        <Leg side={-1} hip={hipL} knee={kneeL} look={look} />
-        <Leg side={1} hip={hipR} knee={kneeR} look={look} />
+        <Leg side={-1} hip={hipL} knee={kneeL} look={look} length={legs} />
+        <Leg side={1} hip={hipR} knee={kneeR} look={look} length={legs} />
       </group>
     </group>
   );
@@ -510,9 +546,9 @@ function Arm({
   elbow,
   skin,
   sleeve,
-  cup,
+  prop,
 }: {
-  cup?: boolean;
+  prop?: Props["prop"];
   side: -1 | 1;
   shoulder: RefObject<THREE.Group | null>;
   elbow: RefObject<THREE.Group | null>;
@@ -526,7 +562,19 @@ function Arm({
       <group ref={elbow} position={[0, -UPPER_ARM - 0.01, 0]}>
         <mesh geometry={geo.forearm} material={skin} castShadow />
         <mesh geometry={geo.hand} material={skin} position={[0, -FOREARM - 0.035, 0.005]} scale={[0.8, 1.05, 0.62]} castShadow />
-        {cup && (
+        {prop === "tray" && (
+          // With the forearm level, the hand's +z points up: the tray lies flat on the palm.
+          <group position={[0, -FOREARM - 0.05, 0.05]} rotation={[Math.PI / 2, 0, 0]}>
+            <mesh geometry={geo.tray} material={trayMat} castShadow />
+            {[-0.08, 0.08].map((x) => (
+              <group key={x} position={[x, 0.065, x * 0.4]}>
+                <mesh geometry={geo.cup} material={cupMat} castShadow />
+                <mesh geometry={geo.coffee} material={coffeeMat} position={[0, 0.052, 0]} />
+              </group>
+            ))}
+          </group>
+        )}
+        {prop === "cup" && (
           <group position={[0, -FOREARM - 0.05, 0.06]} rotation={[Math.PI / 2, 0, 0]}>
             <mesh geometry={geo.cup} material={cupMat} castShadow />
             <mesh geometry={geo.coffee} material={coffeeMat} position={[0, 0.052, 0]} />
@@ -537,9 +585,21 @@ function Arm({
   );
 }
 
-function Leg({ side, hip, knee, look }: { side: -1 | 1; hip: RefObject<THREE.Group | null>; knee: RefObject<THREE.Group | null>; look: Look }) {
+function Leg({
+  side,
+  hip,
+  knee,
+  look,
+  length = 1,
+}: {
+  side: -1 | 1;
+  hip: RefObject<THREE.Group | null>;
+  knee: RefObject<THREE.Group | null>;
+  look: Look;
+  length?: number;
+}) {
   return (
-    <group ref={hip} position={[side * 0.088, -0.06, 0]}>
+    <group ref={hip} position={[side * 0.088, -0.06, 0]} scale={[1, length, 1]}>
       <mesh geometry={geo.thigh} material={look.thigh} castShadow />
       {look.shortsLeg && <mesh geometry={geo.shortsLeg} material={look.shortsLeg} position={[0, 0.03, 0]} castShadow />}
       <group ref={knee} position={[0, -THIGH - 0.01, 0]}>

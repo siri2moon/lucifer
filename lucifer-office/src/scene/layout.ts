@@ -23,7 +23,7 @@ export interface Zone {
 
 /** Work zones in priority order. The first is reserved for the executive team. */
 export const ZONES: Zone[] = [
-  { id: "sky", label: "Sky deck", center: [3, 8.25, 0], size: [5, 5], capacity: 2, onYacht: true },
+  { id: "sky", label: "Sky deck", center: [2.6, 8.25, 0], size: [4.6, 4.4], capacity: 2, onYacht: true },
   { id: "upper", label: "Upper deck", center: [-6.5, 5.85, 0], size: [9, 7], capacity: 6, onYacht: true },
   { id: "aft", label: "Aft deck", center: [-17.5, 3.25, 0], size: [6.5, 8], capacity: 4, onYacht: true },
   { id: "bow", label: "Bow deck", center: [13.5, 3.25, 0], size: [6, 5.5], capacity: 3, onYacht: true },
