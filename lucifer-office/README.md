@@ -53,7 +53,7 @@ The dev server proxies `/api` and `/ws` to the engine. For an engine elsewhere, 
 - Agent and task drawers with subtasks, logs, results, a full-screen file viewer and cancellation. Expand a drawer for comfortable reading.
 - Click an angel or a name in the roster and the camera flies there. `Esc` returns to the overview.
 - A guided tour on the first visit, reopened with the help button or `?`.
-- English and Vietnamese, switchable from the globe menu.
+- English and Vietnamese. The first visit follows the browser's language (English if it is neither); the globe menu switches and remembers the choice.
 
 ## Project structure
 

@@ -3,6 +3,7 @@ import type { Activity, Agent, Snapshot, Task } from "./protocol";
 import { computeLayout, ZONES } from "./scene/layout";
 import { activityText, localize, MESSAGES } from "./i18n";
 import { applyEvent, emptyOffice } from "./state/office";
+import { preferredLang } from "./langs";
 
 function agent(id: string, departmentId: string, managerId: string | null): Agent {
   return {
@@ -130,5 +131,14 @@ describe("i18n", () => {
     const update = { ...activity("c", "update", "samael"), taskId: "T-1", text: "Đang viết" };
     // Agents' own words are shown as written, whatever the UI language.
     expect(activityText(update, MESSAGES.en, lookup)).toBe("Đang viết");
+  });
+});
+
+describe("preferredLang", () => {
+  it("follows the browser's first supported language and falls back to English", () => {
+    expect(preferredLang(["vi-VN", "en-US"])).toBe("vi");
+    expect(preferredLang(["fr-FR", "EN-gb"])).toBe("en");
+    expect(preferredLang(["ja-JP", "fr"])).toBe("en");
+    expect(preferredLang([])).toBe("en");
   });
 });

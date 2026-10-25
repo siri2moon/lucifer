@@ -13,3 +13,15 @@ export const DEFAULT_LANG: Lang = "en";
 export function isLang(value: unknown): value is Lang {
   return LANGS.some((l) => l.id === value);
 }
+
+/**
+ * The first of the browser's preferred languages that the UI supports, matched on the primary tag
+ * ("vi-VN" → "vi"); English when none matches.
+ */
+export function preferredLang(languages: readonly string[]): Lang {
+  for (const tag of languages) {
+    const primary = tag.split("-")[0]?.toLowerCase();
+    if (isLang(primary)) return primary;
+  }
+  return DEFAULT_LANG;
+}

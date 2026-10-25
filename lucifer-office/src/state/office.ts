@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { DEFAULT_LANG, isLang, type Lang } from "../langs";
+import { isLang, type Lang, preferredLang } from "../langs";
 import type { Activity, Agent, CompanyInfo, EngineInfo, ServerEvent, Task } from "../protocol";
 
 const MAX_ACTIVITIES = 300;
@@ -130,9 +130,11 @@ function loadLang(): Lang {
     const saved = localStorage.getItem(LANG_KEY);
     if (isLang(saved)) return saved;
   } catch {
-    // Storage unavailable: use the default.
+    // Storage unavailable: fall back to the browser's language.
   }
-  return DEFAULT_LANG;
+  // No choice saved yet: follow the browser, English if it prefers nothing we support.
+  if (typeof navigator === "undefined") return preferredLang([]);
+  return preferredLang(navigator.languages?.length ? navigator.languages : [navigator.language ?? ""]);
 }
 
 function loadPanelsVisible(): boolean {
