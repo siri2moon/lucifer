@@ -46,6 +46,7 @@ The dev server proxies `/api` and `/ws` to the engine. For an engine elsewhere, 
 - Beachgoers take turns strolling, swimming, sunbathing and waving at the yacht; a new one appears every 40 seconds (`SHIFT_MS` in `src/scene/Beachgoers.tsx`).
 
 **Interface**
+- A "Midnight & Champagne" bridge: smoked navy glass with champagne-gold hairlines, ivory type, Cormorant Garamond for names and numbers (Manrope for text), a gilded call to action and a six-star crest. All colors are tokens at the top of `src/styles.css`.
 - Team roster, kanban board, activity feed and an assign bar with assignee and priority.
 - **Live missions** above the assign bar: every request shows its phase, a streaming progress bar, the angels working on it and what they just did. Board cards show the current step, a running clock and subtask progress.
 - **Work links** on the yacht: a glowing arc from each manager to the reports holding their subtasks, with light flowing down while they work and a comet on every hand-off and every report back. Links of the selected mission glow brighter.

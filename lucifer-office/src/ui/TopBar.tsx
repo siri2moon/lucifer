@@ -35,7 +35,7 @@ export function TopBar() {
   return (
     <header className="topbar glass">
       <div className="brand">
-        <span className="brand__logo">😈</span>
+        <Monogram />
         <div>
           <div className="brand__name">{company?.name ?? "Lucifer Office"}</div>
           <div className="brand__sub">{t.brandSub}</div>
@@ -128,6 +128,34 @@ function HelpIcon() {
       <circle cx="12" cy="12" r="9.5" />
       <path d="M9.4 9.2a2.7 2.7 0 0 1 5.2 1c0 1.8-2.6 2.4-2.6 4" />
       <path d="M12 17.4h.01" />
+    </svg>
+  );
+}
+
+/** The house crest: a gilded L in a navy medallion, ringed by six stars. */
+function Monogram() {
+  const stars = Array.from({ length: 6 }, (_, i) => {
+    const a = (i / 6) * Math.PI * 2 - Math.PI / 2;
+    return [24 + Math.cos(a) * 18.5, 24 + Math.sin(a) * 18.5] as const;
+  });
+  return (
+    <svg className="brand__logo" viewBox="0 0 48 48" aria-hidden>
+      <defs>
+        <linearGradient id="crest-gold" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#f6e3ad" />
+          <stop offset="0.45" stopColor="#d9b56c" />
+          <stop offset="0.6" stopColor="#b48a3f" />
+          <stop offset="1" stopColor="#ecd08a" />
+        </linearGradient>
+      </defs>
+      <circle cx="24" cy="24" r="22.5" fill="#0b1a30" stroke="url(#crest-gold)" strokeWidth="1.5" />
+      <circle cx="24" cy="24" r="14" fill="none" stroke="url(#crest-gold)" strokeWidth="0.6" opacity="0.6" />
+      {stars.map(([x, y], i) => (
+        <path key={i} d={`M${x} ${y - 2.2}L${x + 0.7} ${y - 0.7}L${x + 2.2} ${y}L${x + 0.7} ${y + 0.7}L${x} ${y + 2.2}L${x - 0.7} ${y + 0.7}L${x - 2.2} ${y}L${x - 0.7} ${y - 0.7}Z`} fill="url(#crest-gold)" />
+      ))}
+      <text x="24" y="30.5" textAnchor="middle" fontFamily="'Cormorant Garamond', Didot, Georgia, serif" fontWeight="700" fontSize="19" fill="url(#crest-gold)">
+        L
+      </text>
     </svg>
   );
 }
